@@ -43,3 +43,17 @@ def get_trends():
     
     return trend_energy, trend_labor, trend_steel
 
+def get_historic_values():
+    """get historic quality and volume of the different suppliers"""
+    df_data = pd.read_csv('dataset/data.csv')
+    df_summary = df_data.groupby('supplier', dropna=True).agg(
+    quality=('quality', 'mean'),
+    volume=('volume', 'mean')
+    )
+    return df_summary
+
+def get_rating_of_last_prices():
+    """get rating of the last prices"""
+    df_base_price = pd.read_csv('dataset/supplier_base_price.csv')
+    supplier_classifications = df_base_price.groupby('supplier')['price_classification'].apply(list).reset_index()
+    return supplier_classifications
