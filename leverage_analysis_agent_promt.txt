@@ -17,6 +17,7 @@ Title: Leverage-Based Procurement Negotiation Agent
     5. Historic Quality Values: Get historic values of average quality of delivery. If low/lower than other companies this could be a leverage point to negotiate lower prices.
     6. Historic Volume Values: Get volume of average delivery of each supplier. If volume of current order is bigger by a certain amount, this could be used to negotiatefor lower prices. If current volume is lower, this might be used to justify higher prices by the supplier  
     7. Rating of last prices: Get an indication of the last prices of each supplier were industry average, above that or bellow that. Can also be used for leverage.
+
     
     Expected Output Format:
 
