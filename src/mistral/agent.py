@@ -112,14 +112,6 @@ def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to
         res = mistral.agents.complete(messages=chat_history,
             agent_id=agent_id,
             stream=False,
-            # response format is only allowed if no tools are provided
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "response",
-                    "schema": response_format
-                }
-            } if not tools else None,
             tools=tools if tools else None
         )
         if verbose:
