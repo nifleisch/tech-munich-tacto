@@ -34,7 +34,7 @@ tools = [
 ]
 
 def strategy_formalizer():
-    message = "Please read in the offer and leverage data and create a strategy formulization based according to your system prompt and based on the data you read in."
+    message = "Please read in the offer and leverage data and create a strategy formulization based according to your system prompt and based on the data you read in. Do provide a descriptive title for the entire strategy. Do provide descriptive actions and leverages for each step of the strategy."
     response_format = {
         "type": "object",
         "strategy": {
