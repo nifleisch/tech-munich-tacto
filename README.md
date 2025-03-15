@@ -39,3 +39,14 @@ This project uses [Poetry](https://python-poetry.org/) to manage dependencies. F
    ```
 
 Happy coding!
+
+
+## Creating the mock dataset
+
+To generate a mock dataset for the project, run the script `dataset/create.py` with the following command:
+
+```bash
+python dataset/create.py
+```
+
+This will create a mock dataset with 100 events and save it as `dataset/data.csv`. Note that the script will also create the other files in the `dataset` folder that provide further context for the data.
