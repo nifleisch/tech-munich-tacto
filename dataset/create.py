@@ -63,6 +63,14 @@ def create_steel_df() -> pd.DataFrame:
     steel_df = pd.DataFrame({"year": years, "change_rate": change_rates})
     return steel_df
 
+def create_energy_df() -> pd.DataFrame:
+    """
+    Creates a DataFrame for energy price change rates from 2020 to 2025.
+    """
+    years = list(range(2020, 2026))
+    change_rates = [round(random.uniform(0.85, 1.20), 2) for _ in years]
+    energy_df = pd.DataFrame({"year": years, "change_rate": change_rates})
+    return energy_df
 
 def create_labor_df() -> pd.DataFrame:
     """
@@ -98,16 +106,26 @@ def create_supplier_base_price_df(
             # Weighted geometric mean: exp(0.3*ln(steel) + 0.7*ln(labor))
             multiplier = (steel_factor**0.3) * (labor_factor**0.7)
             price_current = price_prev * multiplier
-            records.append(
-                {
-                    "supplier": supplier,
-                    "year": year,
-                    "base_price": round(price_current, 2),
-                }
-            )
+            if (year in [2021, 2022, 2023] and supplier == "RotorDynamics") or (year in [2021, 2022, 2023] and supplier == "TorqueTech") or (year in [2024,2025] and supplier =="TorqueTech"):
+                records.append(
+                    {
+                        "supplier": supplier,
+                        "year": year,
+                        "base_price": round(price_current, 2),
+                    }
+                )
+            else:
+                records.append(
+                    {
+                        "supplier": supplier,
+                        "year": year,
+                        "base_price": np.nan,
+                    }
+                )
             # Update for cumulative effect in subsequent years.
             price_prev = price_current
     supplier_base_price_df = pd.DataFrame(records)
+
     return supplier_base_price_df
 
 
@@ -299,6 +317,7 @@ def create_mock_datasets() -> Dict[str, pd.DataFrame]:
     supplier_df = create_supplier_df()
     steel_df = create_steel_df()
     labor_df = create_labor_df()
+    energy_df = create_energy_df()
     supplier_base_price_df = create_supplier_base_price_df(
         supplier_df, steel_df, labor_df
     )
@@ -312,6 +331,7 @@ def create_mock_datasets() -> Dict[str, pd.DataFrame]:
         "supplier": supplier_df,
         "steel": steel_df,
         "labor": labor_df,
+        "energy": energy_df,
         "supplier_base_price": supplier_base_price_df,
         "customer": customer_df,
         "customer_supplier": customer_supplier_df,
