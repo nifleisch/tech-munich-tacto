@@ -126,6 +126,33 @@ def create_supplier_base_price_df(
             price_prev = price_current
     supplier_base_price_df = pd.DataFrame(records)
 
+
+    # Step 1: Calculate the average industry price by year
+    average_industry_price = supplier_base_price_df.groupby('year')['base_price'].mean()
+
+    # Step 2: Sample a random number from uniform(0.95, 1.05) for each year and multiply by the average industry price
+    random_factors = np.random.uniform(0.95, 1.05, size=len(average_industry_price))
+    adjusted_prices = average_industry_price * random_factors
+
+    # Step 3: Merge adjusted prices back into the supplier_base_price_df
+    supplier_base_price_df = supplier_base_price_df.merge(adjusted_prices.rename('adjusted_price'), 
+                                                        left_on='year', 
+                                                        right_index=True, 
+                                                        how='left')
+
+    # Step 4: Create the "high", "avg", "low" classification
+    def classify_price(row):
+        if row['base_price'] < 1.05 * row['adjusted_price'] and row['base_price'] > 0.95 * row['adjusted_price']:
+            return "avg"
+        elif row['base_price'] >= 1.05 * row['adjusted_price']:
+            return 'high'
+        elif row['base_price'] <= 0.95 * row['adjusted_price']:
+            return 'low'
+        else:
+            return 'None'
+ 
+    supplier_base_price_df['price_classification'] = supplier_base_price_df.apply(classify_price, axis=1)
+
     return supplier_base_price_df
 
 
@@ -261,7 +288,7 @@ def create_data_df_with_supplier(
             (supplier_base_price_df["supplier"] == supplier)
             & (supplier_base_price_df["year"] == event_year)
         ]
-        if not base_price_record.empty:
+        if not base_price_record.empty and base_price_record.iloc[0]["base_price"] is not np.nan:
             supplier_base_price = base_price_record.iloc[0]["base_price"]
         else:
             supplier_base_price = np.nan
@@ -271,8 +298,11 @@ def create_data_df_with_supplier(
         # Higher volume, longer arrival, and better relationship (higher number) lead to lower price.
         discount = 0.0005 * volume + 0.001 * arrival_delay + 0.01 * relationship
         # Add a little randomness from a normal noise.
-        price = supplier_base_price * (1 - discount) + np.random.normal(0, 1)
-        price = round(max(price, 0), 2)  # Ensure price is non-negative.
+        if supplier_base_price is not np.nan:
+            price = supplier_base_price * (1 - discount) + np.random.normal(0, 1)
+            price = round(max(price, 0), 2)  # Ensure price is non-negative.
+        else:
+            price = np.nan
 
         records.append(
             {
@@ -321,6 +351,7 @@ def create_mock_datasets() -> Dict[str, pd.DataFrame]:
     supplier_base_price_df = create_supplier_base_price_df(
         supplier_df, steel_df, labor_df
     )
+    
     customer_df = create_customer_df()
     customer_supplier_df = create_customer_supplier_df(customer_df, supplier_df)
     data_df = create_data_df_with_supplier(
