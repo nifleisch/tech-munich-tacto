@@ -50,10 +50,10 @@ def get_historic_values():
     quality=('quality', 'mean'),
     volume=('volume', 'mean')
     )
-    return df_summary
+    return df_summary.quality.to_string(), df_summary.volume.to_string()
 
 def get_rating_of_last_prices():
     """get rating of the last prices"""
     df_base_price = pd.read_csv('dataset/supplier_base_price.csv')
     supplier_classifications = df_base_price.groupby('supplier')['price_classification'].apply(list).reset_index()
-    return supplier_classifications
+    return supplier_classifications.to_string()
