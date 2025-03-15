@@ -8,12 +8,16 @@ authors = [
 license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-    "pandas (>=2.2.3,<3.0.0)"
-]
+dependencies = []
 
 [tool.poetry]
 package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+pandas = "^2.2.3"
+mistralai = "^1.5.1"
+
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
