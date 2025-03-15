@@ -59,7 +59,7 @@ def create_steel_df() -> pd.DataFrame:
     Each year gets a change_rate (for example, 0.85 or 1.20).
     """
     years = list(range(2020, 2026))
-    change_rates = [round(random.uniform(0.85, 1.20), 2) for _ in years]
+    change_rates = [round(random.uniform(0.95, 1.05), 2) for _ in years]
     steel_df = pd.DataFrame({"year": years, "change_rate": change_rates})
     return steel_df
 
@@ -68,7 +68,7 @@ def create_energy_df() -> pd.DataFrame:
     Creates a DataFrame for energy price change rates from 2020 to 2025.
     """
     years = list(range(2020, 2026))
-    change_rates = [round(random.uniform(0.85, 1.20), 2) for _ in years]
+    change_rates = [round(random.uniform(0.95, 1.05), 2) for _ in years]
     energy_df = pd.DataFrame({"year": years, "change_rate": change_rates})
     return energy_df
 
@@ -77,7 +77,7 @@ def create_labor_df() -> pd.DataFrame:
     Creates a DataFrame for labor cost change rates from 2020 to 2025.
     """
     years = list(range(2020, 2026))
-    change_rates = [round(random.uniform(0.85, 1.20), 2) for _ in years]
+    change_rates = [round(random.uniform(0.85, 1.05), 2) for _ in years]
     labor_df = pd.DataFrame({"year": years, "change_rate": change_rates})
     return labor_df
 
