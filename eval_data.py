@@ -24,3 +24,22 @@ def get_price_to_cost_change():
 
     df_sum = df.groupby('supplier', dropna=True)['price_to_cost_change'].sum()
     return df_sum
+
+def get_trends():
+    """get trend in the different sectors"""
+    # Read in the CSV files
+    df_energy = pd.read_csv('dataset/energy.csv')
+    df_labor = pd.read_csv('dataset/labor.csv')
+    df_steel = pd.read_csv('dataset/steel.csv')
+    
+    def calculate_trend(df, column='change_rate'):
+        df = df.sort_values(by='year').tail(3)
+        trend_steepness = df[column].diff().mean()
+        return trend_steepness
+    
+    trend_energy = calculate_trend(df_energy)
+    trend_labor = calculate_trend(df_labor)
+    trend_steel = calculate_trend(df_steel)
+    
+    return trend_energy, trend_labor, trend_steel
+
