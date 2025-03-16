@@ -1,9 +1,10 @@
 import json
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from eval_data import get_price_to_cost_change
+from src.mistral.tools.eval_data import get_price_to_cost_change
 from mistralai import Mistral
 
 api_key = os.getenv("MISTRAL_API_KEY")
@@ -41,12 +42,24 @@ tools = [
                 "required": []
             },
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_offer_and_leverage_data",
+            "description": "This tool reads the offer and leverage data and returns it as a pandas dataframe.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": []
+            },
+        }
     }
     #TODO: add new tools here...
 ]
 
 #TODO: and map their names to the corresponding functions
-tool_name_to_function = {
+example_tool_name_to_function = {
     "example_tool": example_tool,
     "get_price_to_cost_change": get_price_to_cost_change
 }
@@ -60,7 +73,7 @@ example_response_format = {
                 }
 
 
-def agent_call(agent_id, message, response_format=None, tools=None, verbose=True, max_iteration=20):
+def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to_function=None, verbose=True, max_iteration=20):
     """Call an agent with a message and process the response.
 
     Args:
@@ -68,12 +81,20 @@ def agent_call(agent_id, message, response_format=None, tools=None, verbose=True
         message (str): The message to send to the agent.
         response_format (json, optional): The expected json schema of the response. Defaults to None.
         tools (list, optional): See above for a tools list. Defaults to None.
+        tool_name_to_function (dict, optional): A dictionary mapping tool names to the corresponding functions. Defaults to None.
         verbose (bool, optional): Whether to print results. Defaults to True.
         max_iteration (int, optional): Maximum iterations to chat with the agent. Defaults to 10.
 
     Returns:
         str: the response of the agent. If response_format is provided, it will be in the correct format and can be converted to a json object.
     """
+    # assert that the correct tool name to function mapping is provided for the given tools
+    if tools:
+        # check for each tool that the corresponding function is provided
+        for tool in tools:
+            assert tool_name_to_function.get(tool["function"]["name"]), f"Please provide the function for the tool {tool['function']['name']}"
+
+
     iteration = 0
 
     chat_history = [
@@ -91,14 +112,6 @@ def agent_call(agent_id, message, response_format=None, tools=None, verbose=True
         res = mistral.agents.complete(messages=chat_history,
             agent_id=agent_id,
             stream=False,
-            # response format is only allowed if no tools are provided
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "response",
-                    "schema": response_format
-                }
-            } if not tools else None,
             tools=tools if tools else None
         )
         if verbose:
@@ -183,7 +196,7 @@ if __name__ == "__main__":
         "required": ["price_per_customer"]
     }
 
-    res = agent_call(agent_id, message, response_format=response_format, tools=tools)
+    res = agent_call(agent_id, message, response_format=response_format, tools=tools, tool_name_to_function=example_tool_name_to_function)
     res_json = json.loads(res)
     print()
     print('Final response:')

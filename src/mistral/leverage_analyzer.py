@@ -3,9 +3,16 @@ from tools.eval_data import *
 import pandas as pd
 import json
 import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 api_key= os.getenv("MISTRAL_API_KEY")
 mistral = Mistral(api_key=api_key)
+
+# Exposed function: leverage_analyzer()
+# This function is used to find leverage in the negotiation process with suppliers.
+# It assumes the file runtimedata/offers_and_leverages.csv exists and has the following columns: supplier, offer
+# The function will add a new column leverage to the file with the leverage found for each supplier.
 
 tools = [
     {
@@ -13,8 +20,8 @@ tools = [
         "function": {
             "name": "get_price_to_cost_change",
             "description": """
-                           A value for each company, the substraction of increased product price over the last 3 years and increased 
-                           product cost over the last 3 years, indicating if the product has become more expensive. 
+                           A value for each company, the substraction of increased product price over the last 3 years and increased
+                           product cost over the last 3 years, indicating if the product has become more expensive.
                            This should indicate a possible leverage (if value is high, the supplier has increased their margin)
                            """,
             "parameters": {
@@ -29,9 +36,9 @@ tools = [
         "function": {
             "name": "get_trends",
             "description": """
-                            Values that indicate the trend in each cost sector, giving an indication wether 
-                            supplier cost should increase or decrease. Can also be used as argument for leverage 
-                            (example: sector costs have decreased in the last years and product price has increased 
+                            Values that indicate the trend in each cost sector, giving an indication wether
+                            supplier cost should increase or decrease. Can also be used as argument for leverage
+                            (example: sector costs have decreased in the last years and product price has increased
                             could give leverage to question current product price)
                             """,
             "parameters": {
@@ -46,10 +53,10 @@ tools = [
         "function": {
             "name": "get_historic_values",
             "description": """
-                           Get historic values of average quality of delivery. 
+                           Get historic values of average quality of delivery.
                            If low/lower than other companies this could be a leverage point to negotiate lower prices.
-                           This function also gets the volume of average delivery of each supplier. 
-                           If volume of current order is bigger by a certain amount, this could be used to negotiatefor lower prices. 
+                           This function also gets the volume of average delivery of each supplier.
+                           If volume of current order is bigger by a certain amount, this could be used to negotiatefor lower prices.
                            If current volume is lower, this might be used to justify higher prices by the supplier
                            """,
             "parameters": {
@@ -64,7 +71,7 @@ tools = [
         "function": {
             "name": "get_rating_of_last_prices",
             "description": """
-                           Get an indication of the last prices of each supplier were industry 
+                           Get an indication of the last prices of each supplier were industry
                            average, above that or bellow that. Can also be used for leverage.
                            """,
             "parameters": {
@@ -120,7 +127,7 @@ response_format = {
                     "required": ["leverages_per_supplier"]
                 }
 
-def agent_call(agent_id, context, companies_interest, volumes, tools=None, verbose=True, max_iteration=20, response_format=None):
+def _agent_call(agent_id, companies_interest, volumes, tools=None, verbose=True, max_iteration=20, response_format=None):
     """Call an agent with a message and process the response.
 
     Args:
@@ -140,10 +147,6 @@ def agent_call(agent_id, context, companies_interest, volumes, tools=None, verbo
 
     chat_history = [
         {
-            "role": "system",
-            "content": context
-        },
-        {
             "role":"user",
             "content": f"our order is: acceptable price range: [60,63], volumes {volumes}, and our companies of interest are: {companies_interest}. Could you help us with leveraging?"
         }
@@ -154,7 +157,7 @@ def agent_call(agent_id, context, companies_interest, volumes, tools=None, verbo
         if verbose:
             print(f"Iteration {iteration}")
             print("Chat history:", chat_history)
-        
+
         res = mistral.agents.complete(messages=chat_history,
                                       agent_id=agent_id,
                                       stream=False,
@@ -193,7 +196,7 @@ def agent_call(agent_id, context, companies_interest, volumes, tools=None, verbo
         for tool_call in tool_calls:
             function_name = tool_call.function.name
             function_params = json.loads(tool_call.function.arguments)
-            
+
             function_result = tool_name_to_function[function_name](**function_params)
             function_result = str(function_result)
 
@@ -204,29 +207,28 @@ def agent_call(agent_id, context, companies_interest, volumes, tools=None, verbo
         iteration += 1
 
 
+def leverage_analyzer():
+    agent_id = "ag:f9b7aa04:20250316:leverage-analyser:f59c5e87"
 
-if __name__ == "__main__":
-    agent_id = "ag:c6cd1543:20250315:untitled-agent:7942cf08"
-
-    with open('agents/leverage_analysis_agent_promt.txt', 'r') as file:
-        prompt_file = file.read()
-    
     info_file = pd.read_csv("runtimedata/offers_and_leverages.csv")
-    
+
     column_values = info_file["supplier"].tolist()
 
     offer_values = info_file["offer"].tolist()
 
-    result = agent_call(agent_id, prompt_file, str(column_values), str(offer_values), 
+    result = _agent_call(agent_id, str(column_values), str(offer_values),
                         tools=tools, max_iteration=30, response_format=response_format, verbose=False)
-    
+
     j_result = json.loads(result)
-    
+
     info_file["leverage"] = None
-    
+
     for dct in j_result["leverages_per_supplier"]:
         info_file.loc[info_file['supplier'] == dct["supplier"], "leverage"] = dct["leverage"]
-    
+
     info_file.to_csv('runtimedata/offers_and_leverages.csv', index=False)
-        
-    
+
+
+
+if __name__ == "__main__":
+    leverage_analyzer()
