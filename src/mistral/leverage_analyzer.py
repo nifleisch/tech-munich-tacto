@@ -1,10 +1,11 @@
 from mistralai import Mistral
 from tools.leverage_tools import actual_prices
 from tools.eval_data import *
+import pandas as pd
 import json
+import os
 
-api_key= "EOpj3gbnl2zUsxtUGVC1E3tlA8o7JI5Z"
-agent_id = "ag:c6cd1543:20250315:untitled-agent:7942cf08"
+api_key= os.getenv("MISTRAL_API_KEY")
 mistral = Mistral(api_key=api_key)
 
 tools = [
@@ -98,21 +99,40 @@ tool_name_to_function = {
     "actual_prices": actual_prices
 }
 
-with open('agents/leverage_analysis_agent_promt.txt', 'r') as file:
-    prompt_file = file.read()
 
-system_prompt = prompt_file
+response_format = {
+                    "type": "object",
+                    "leverages_per_supplier": {
+                        "type": "list",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "supplier": {
+                                    "type": "string"
+                                },
+                                "leverage": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["supplier", "leverage"]
+                        }
+                    },
+                    "additionalProperties": False,
+                    "required": ["leverages_per_supplier"]
+                }
 
-def agent_call(agent_id, context, companies_interest, tools=None, verbose=True, max_iteration=20):
+def agent_call(agent_id, context, companies_interest, volumes, tools=None, verbose=True, max_iteration=20, response_format=None):
     """Call an agent with a message and process the response.
 
     Args:
         agent_id (str): the agent id
-        message (str): The comapnies of interest to send to the agent.
-        response_format (json, optional): The expected json schema of the response. Defaults to None.
+        context (str): The context to use for the agent to know what if has to do.
+        companis_interest (str): list converted to string with the companies of interest
+        volumes (str): quantity of supplies to negotiate with each supplier
         tools (list, optional): See above for a tools list. Defaults to None.
         verbose (bool, optional): Whether to print results. Defaults to True.
         max_iteration (int, optional): Maximum iterations to chat with the agent. Defaults to 10.
+        response_format (json, optional): The expected json schema of the response. Defaults to None.
 
     Returns:
         str: the response of the agent. If response_format is provided, it will be in the correct format and can be converted to a json object.
@@ -126,7 +146,7 @@ def agent_call(agent_id, context, companies_interest, tools=None, verbose=True, 
         },
         {
             "role":"user",
-            "content": f"our order is: acceptable price range: [60,63], volume: 1000, and our companies of interest are: {companies_interest}. Could you help us with leveraging?"
+            "content": f"our order is: acceptable price range: [60,63], volumes {volumes}, and our companies of interest are: {companies_interest}. Could you help us with leveraging?"
         }
     ]
 
@@ -151,6 +171,23 @@ def agent_call(agent_id, context, companies_interest, tools=None, verbose=True, 
 
         if not tool_calls:
             print("No more tools used, so the the final response is reached")
+            if response_format:
+                chat_history.append({
+                                    "role":"user",
+                                    "content": "could you now please return the suppliers of interest (keys) values should be the leverage arguments and conclusions in markdown format"
+                                    })
+                res = mistral.agents.complete(messages=chat_history,
+                        agent_id=agent_id,
+                        stream=False,
+                        # response format is only allowed if no tools are provided
+                        response_format={
+                            "type": "json_schema",
+                            "json_schema": {
+                                "name": "response",
+                                "schema": response_format
+                            },
+                        }
+                    )
             return res.choices[0].message.content
 
 
@@ -168,7 +205,29 @@ def agent_call(agent_id, context, companies_interest, tools=None, verbose=True, 
         iteration += 1
 
 
-if __name__ == "__main__":
 
-    result = agent_call(agent_id, system_prompt, "ShaftPro, DriveMaster", tools=tools, max_iteration=30)
-    print(result)
+if __name__ == "__main__":
+    agent_id = "ag:c6cd1543:20250315:untitled-agent:7942cf08"
+
+    with open('agents/leverage_analysis_agent_promt.txt', 'r') as file:
+        prompt_file = file.read()
+    
+    info_file = pd.read_csv("runtimedata/offers_and_leverages.csv")
+    
+    column_values = info_file["supplier"].tolist()
+
+    offer_values = info_file["offer"].tolist()
+
+    result = agent_call(agent_id, prompt_file, str(column_values), str(offer_values), 
+                        tools=tools, max_iteration=30, response_format=response_format, verbose=False)
+    
+    j_result = json.loads(result)
+    
+    info_file["leverage"] = None
+    
+    for dct in j_result["leverages_per_supplier"]:
+        info_file.loc[info_file['supplier'] == dct["supplier"], "leverage"] = dct["leverage"]
+    
+    info_file.to_csv('runtimedata/offers_and_leverages.csv', index=False)
+        
+    

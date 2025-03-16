@@ -23,7 +23,7 @@ def get_price_to_cost_change():
     df['price_to_cost_change'] = df['price_pct_change'] - df['change_rate']
 
     df_sum = df.groupby('supplier', dropna=True)['price_to_cost_change'].sum()
-    return df_sum
+    return df_sum.to_string()
 
 def get_trends():
     """get trend in the different sectors"""
@@ -41,7 +41,7 @@ def get_trends():
     trend_labor = calculate_trend(df_labor)
     trend_steel = calculate_trend(df_steel)
     
-    return trend_energy, trend_labor, trend_steel
+    return f"energy trends: {trend_energy}, labor trends: {trend_labor}, steel trends: {trend_steel}"
 
 def get_historic_values():
     """get historic quality and volume of the different suppliers"""
@@ -50,10 +50,16 @@ def get_historic_values():
     quality=('quality', 'mean'),
     volume=('volume', 'mean')
     )
-    return df_summary.quality.to_string(), df_summary.volume.to_string()
+    return "quality" + df_summary.quality.to_string() + "volume: " + df_summary.volume.to_string()
 
 def get_rating_of_last_prices():
     """get rating of the last prices"""
     df_base_price = pd.read_csv('dataset/supplier_base_price.csv')
     supplier_classifications = df_base_price.groupby('supplier')['price_classification'].apply(list).reset_index()
     return supplier_classifications.to_string()
+
+def actual_prices():
+    table = pd.read_csv("dataset/supplier_base_price.csv")
+    table = table[table['year'].isin([2025])]
+    name_value_dict = dict(zip(table['supplier'], table['base_price']))
+    return f"these are the actual prices of all the companies {name_value_dict}"
