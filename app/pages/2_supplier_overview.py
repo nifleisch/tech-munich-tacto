@@ -1,6 +1,11 @@
 import streamlit as st
 import pandas as pd
-from utils import COMPONENT, CUSTOMER
+
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from src.utils import COMPONENT, CUSTOMER
 from streamlit_extras.switch_page_button import switch_page
 
 st.set_page_config(
@@ -11,11 +16,11 @@ st.set_page_config(
 
 col1, col2, col3 = st.columns([2, 2, 1])
 with col1:
-    st.image("assets/supplier_agent.png", use_container_width=True)
+    st.image("app/assets/supplier_agent.png", use_container_width=True)
 
 # Load supplier data
 try:
-    supplier_df = pd.read_csv("../dataset/supplier.csv")
+    supplier_df = pd.read_csv("dataset/supplier.csv")
     num_suppliers = len(supplier_df)
 
     # Display success banner
@@ -60,25 +65,36 @@ st.write("")
 
 # Load data.csv to get last prices
 try:
-    data_df = pd.read_csv("../dataset/data.csv")
+    data_df = pd.read_csv("dataset/data.csv")
 
     # Convert decision_date to datetime for sorting
     data_df["decision_date"] = pd.to_datetime(data_df["decision_date"])
 
     # Function to get the last price for a specific supplier and customer
-    def get_last_price(supplier_name, customer_name):
-        # Filter data for the specific supplier and customer
-        filtered_df = data_df[
-            (data_df["supplier"] == supplier_name)
-            & (data_df["customer"] == customer_name)
-        ]
+    def get_last_price(supplier, customer):
+        try:
+            # Filter by supplier and customer
+            filtered_df = data_df[
+                (data_df["supplier"] == supplier) & (data_df["customer"] == customer)
+            ]
 
-        if filtered_df.empty:
-            return "No previous orders"
+            # Filter out rows where price is NaN
+            filtered_df = filtered_df[filtered_df["price"].notna()]
 
-        # Sort by date and get the most recent price
-        latest_order = filtered_df.sort_values("decision_date", ascending=False).iloc[0]
-        return f"${latest_order['price']:.2f}"
+            # Convert decision_date to datetime
+            filtered_df["decision_date"] = pd.to_datetime(filtered_df["decision_date"])
+
+            # Sort by date in descending order
+            sorted_df = filtered_df.sort_values("decision_date", ascending=False)
+
+            # Get the most recent price
+            if not sorted_df.empty:
+                latest_order = sorted_df.iloc[0]
+                return f"${latest_order['price']:.2f}"
+            else:
+                return "No history"
+        except Exception as e:
+            return "Error"
 
     # Initialize the offer_status in session state if it doesn't exist
     if "offer_status" not in st.session_state:

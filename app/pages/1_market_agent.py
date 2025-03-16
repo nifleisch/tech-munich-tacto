@@ -1,7 +1,12 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from utils import COMPONENT, CUSTOMER
+
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from src.utils import COMPONENT, CUSTOMER
 import matplotlib.dates as mdates
 from streamlit_extras.switch_page_button import switch_page
 
@@ -14,7 +19,7 @@ st.set_page_config(
 
 col1, col2, col3 = st.columns([2, 2, 1])
 with col1:
-    st.image("assets/market_briefing.png", use_container_width=True)
+    st.image("app/assets/market_briefing.png", use_container_width=True)
 
 st.write("")
 
@@ -22,6 +27,9 @@ st.write("")
 def get_latest_purchase(df, customer):
     # Filter by customer
     customer_df = df[df["customer"] == customer]
+
+    # Filter out rows where price is NaN
+    customer_df = customer_df[customer_df["price"].notna()]
 
     # Convert decision_date to datetime if it's not already
     if not pd.api.types.is_datetime64_any_dtype(customer_df["decision_date"]):
@@ -54,9 +62,9 @@ def create_price_development_plots(latest_purchase):
         matplotlib figure object
     """
     # Load the development data
-    energy_df = pd.read_csv("../dataset/energy_development.csv", parse_dates=["date"])
-    labor_df = pd.read_csv("../dataset/labor_development.csv", parse_dates=["date"])
-    steel_df = pd.read_csv("../dataset/steel_development.csv", parse_dates=["date"])
+    energy_df = pd.read_csv("dataset/energy_development.csv", parse_dates=["date"])
+    labor_df = pd.read_csv("dataset/labor_development.csv", parse_dates=["date"])
+    steel_df = pd.read_csv("dataset/steel_development.csv", parse_dates=["date"])
 
     # Function to filter the DataFrame for dates > latest_purchase['date']
     # and normalize by the price at that date (or first available after if missing)
@@ -136,7 +144,7 @@ def create_price_development_plots(latest_purchase):
     return fig, merged_df
 
 
-data_df = pd.read_csv("../dataset/data.csv")
+data_df = pd.read_csv("dataset/data.csv")
 
 # Get the latest purchase information
 latest_purchase = get_latest_purchase(data_df, CUSTOMER)
@@ -158,7 +166,7 @@ if latest_purchase:
         f"For the component {COMPONENT}, I identified the following **cost factors**:"
     )
 
-    cost_factors = pd.read_csv("../dataset/cost_factors.csv")
+    cost_factors = pd.read_csv("dataset/cost_factors.csv")
 
     # Define the colors for each segment
     colors = ["#4544e4", "#ab52ba", "#ffcb7f"]

@@ -31,9 +31,9 @@ if __name__ == "__main__":
     volatility = 0.01
 
     # Set drift values: energy and labor go slightly down, steel goes slightly up.
-    drift_energy = -0.0005  # Energy prices drift downward
-    drift_labor = -0.0005  # Labor prices drift downward
-    drift_steel = +0.001  # Steel prices drift upward
+    drift_energy = -0.0006  # Energy prices drift downward
+    drift_labor = -0.0004  # Labor prices drift downward
+    drift_steel = +0.000  # Steel prices drift upward
 
     # Simulate price series for each asset
     energy_prices = simulate_brownian(n, drift_energy, volatility)

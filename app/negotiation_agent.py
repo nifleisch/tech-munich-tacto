@@ -1,6 +1,11 @@
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-from utils import COMPONENT
+from src.utils import COMPONENT
 
 st.set_page_config(
     page_title="Tacto Landing Page",
@@ -10,7 +15,7 @@ st.set_page_config(
 
 col1, col2, col3 = st.columns([1, 6, 1])
 with col2:
-    st.image("assets/tacto_logo_full.png", use_container_width=True)
+    st.image("app/assets/tacto_logo_full.png", use_container_width=True)
     st.write("")
     st.write("")
 
