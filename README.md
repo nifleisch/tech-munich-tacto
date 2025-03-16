@@ -20,7 +20,7 @@ This project uses [Poetry](https://python-poetry.org/) to manage dependencies. F
    brew install portaudio
    ```
 
-   > If you're on linux or windows, pls research on how to install portaudio 🙏
+   > If you're on linux or windows, pls refer to this [github page](https://github.com/GoogleCloudPlatform/python-docs-samples/blob/main/scripts/readme-gen/templates/install_portaudio.tmpl.rst) on how to install portaudio
 
    Run the following command to create a virtual environment and install all required packages:
    ```bash
