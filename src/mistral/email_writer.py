@@ -40,7 +40,7 @@ tools = [
     }
 ]
 
-def email_agent(supplier_name, accept: bool):
+def customer_email_agent(supplier_name, accept: bool):
 
     # Check if there is a previous message thread for this supplier stored in a pickle file
     if os.path.exists(f"email_messages/{supplier_name}_email_chat_history.pkl"):
@@ -50,10 +50,7 @@ def email_agent(supplier_name, accept: bool):
         chat_history = []
 
     if len(chat_history) > 0:
-        # extend the latest message (which should contain the response email) with the new message
-        message = chat_history[-1]['message'] + f'\n\nThe supplier {supplier_name} should be contacted again. The system prompt is: The supplier name you should focus on is {supplier_name}.\n{"You should accept the offer." if accept else "You should do a counteroffer."}\nPlease read in the offer and leverage data.\nWrite an email adhering to the given data and your system prompt.'
-        # remove the last message from the chat history, since the response email is now stored in the message
-        chat_history = chat_history[:-1]
+        message = f'\n\nThe supplier {supplier_name} should be contacted again. The supplier name you should focus on is {supplier_name}.\n{"You should accept the offer." if accept else "You should do a counteroffer."}\nPlease read in the offer and leverage data.\nWrite an email adhering to the given data and your system prompt. The email is an anwser to the previous email.'
     else:
         message = f"""The supplier name you should focus on is {supplier_name}.
         {"You should accept the offer." if accept else "You should do a counteroffer."}
@@ -71,6 +68,8 @@ def email_agent(supplier_name, accept: bool):
     res_json = json.loads(res)
 
     # Save the chat history to a pickle file
+    directory = "email_messages"
+    os.makedirs(directory, exist_ok=True)
     with open(f"email_messages/{supplier_name}_email_chat_history.pkl", 'wb') as f:
         pickle.dump(chat_history, f)
 
@@ -86,46 +85,30 @@ def supplier_email_agent(supplier_name, accept:bool):
 
     assert len(chat_history) > 0, f"No previous message thread found for supplier {supplier_name}"
 
-    previous_message = json.loads(chat_history[-1].content).get('email')
-
-    message = f"{previous_message}\n\nYou got an email from the customer. {'Accept the offer.' if accept else 'Do a counteroffer.'} Base your reply on the email thread given in the chat history."
+    message = f"You got an email from the customer. {'Accept the offer.' if accept else 'Do a counteroffer.'} Base your reply on the email thread given in the chat history. The email is an anwser to the previous email. Do also return the offer amount."
 
     response_format = {
         "email": {
             "type": "string",
         },
+        "offer": {
+            "type": "number",
+        },
         "additionalProperties": False,
-        "required": ["email"]
+        "required": ["email", "offer"]
     }
 
     res, chat_history = agent_call(supplier_email_agent_id, message, response_format=response_format, chat_history=chat_history, return_chat_history=True)
     res_json = json.loads(res)
     email = res_json.get('email')
+    offer = res_json.get('offer')
 
     # Save the chat history to a pickle file
     with open(f"email_messages/{supplier_name}_email_chat_history.pkl", 'wb') as f:
         pickle.dump(chat_history, f)
 
-    _add_supplier_email_response(supplier_name, email)
+    return email, offer
 
-    return email
-
-
-def _add_supplier_email_response(supplier_name, email):
-    # Check if there is a previous message thread for this supplier stored in a pickle file
-    if os.path.exists(f"email_messages/{supplier_name}_email_chat_history.pkl"):
-        with open(f"email_messages/{supplier_name}_email_chat_history.pkl", 'rb') as f:
-            chat_history = pickle.load(f)
-    else:
-        chat_history = []
-
-    chat_history.append({"role": "user", "message": f'Response by the supplier {supplier_name}: ' + email})
-
-    # Save the chat history to a pickle file
-    with open(f"email_messages/{supplier_name}_email_chat_history.pkl", 'wb') as f:
-        pickle.dump(chat_history, f)
-
-    return
 
 def delete_email_history(supplier_name):
     if os.path.exists(f"email_messages/{supplier_name}_email_chat_history.pkl"):
@@ -133,20 +116,20 @@ def delete_email_history(supplier_name):
     return
 
 if __name__ == '__main__':
-    email_TorqueTech_1 = email_agent("TorqueTech", accept=False)
-    response_email_1 = supplier_email_agent("TorqueTech", accept=False)
-    email_TorqueTech_2 = email_agent("TorqueTech", accept=False)
-    response_email_2 = supplier_email_agent("TorqueTech", accept=False)
-    email_TorqueTech_3 = email_agent("TorqueTech", accept=True)
+    email_TorqueTech_1 = customer_email_agent("TorqueTech", accept=False)
+    response_email_1, offer_1 = supplier_email_agent("TorqueTech", accept=False)
+    email_TorqueTech_2 = customer_email_agent("TorqueTech", accept=False)
+    response_email_2, offer_2 = supplier_email_agent("TorqueTech", accept=False)
+    email_TorqueTech_3 = customer_email_agent("TorqueTech", accept=True)
 
 
     print('Email to TorqueTech 1:')
     print(email_TorqueTech_1)
-    print('Response from TorqueTech:')
+    print(f'Response from TorqueTech ({offer_1}$):')
     print(response_email_1)
     print('Email to TorqueTech 2:')
     print(email_TorqueTech_2)
-    print('Response from TorqueTech:')
+    print(f'Response from TorqueTech({offer_2}$):')
     print(response_email_2)
     print('Email to TorqueTech 3:')
     print(email_TorqueTech_3)
