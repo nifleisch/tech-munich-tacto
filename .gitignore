@@ -175,3 +175,5 @@ cython_debug/
 
 # don't include created data
 dataset/*.csv
+runtimedata/*
+email_messages/*
