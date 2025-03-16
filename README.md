@@ -50,7 +50,7 @@ For the development of this work we utilized:
 
 ### Connect AI Agents
 - Use the [Mistral AI console](https://console.mistral.ai/home) to generate your API keys and copy it into the [.env_example](.env_example) file.
-- Replace the agent ids from the [email_writer.py](src/mistral/email_writer.py), [leverage_analyzer.py](src/mistral/leverage_analyzer.py), and [strategy_formalizer.py](src/mistral/strategy_formalizer.py) with the ids of your own agents.
+- Replace the agent ids environment variables from [.env_example](.env_example) with the ids of your own agents.
 
 ### Setup Virtual Environment 
 
