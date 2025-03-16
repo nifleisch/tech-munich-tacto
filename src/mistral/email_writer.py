@@ -118,9 +118,7 @@ def delete_email_history(supplier_name):
 if __name__ == '__main__':
     email_TorqueTech_1 = customer_email_agent("TorqueTech", accept=False)
     response_email_1, offer_1 = supplier_email_agent("TorqueTech", accept=False)
-    email_TorqueTech_2 = customer_email_agent("TorqueTech", accept=False)
-    response_email_2, offer_2 = supplier_email_agent("TorqueTech", accept=False)
-    email_TorqueTech_3 = customer_email_agent("TorqueTech", accept=True)
+    email_TorqueTech_2 = customer_email_agent("TorqueTech", accept=True)
 
 
     print('Email to TorqueTech 1:')
@@ -129,10 +127,6 @@ if __name__ == '__main__':
     print(response_email_1)
     print('Email to TorqueTech 2:')
     print(email_TorqueTech_2)
-    print(f'Response from TorqueTech({offer_2}$):')
-    print(response_email_2)
-    print('Email to TorqueTech 3:')
-    print(email_TorqueTech_3)
 
 
     # write pickled chat history to a txt file as string
