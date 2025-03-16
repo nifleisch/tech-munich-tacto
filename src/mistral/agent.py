@@ -73,7 +73,7 @@ example_response_format = {
                 }
 
 
-def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to_function=None, verbose=True, max_iteration=20):
+def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to_function=None, verbose=True, max_iteration=20, chat_history=[], return_chat_history=False):
     """Call an agent with a message and process the response.
 
     Args:
@@ -84,6 +84,8 @@ def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to
         tool_name_to_function (dict, optional): A dictionary mapping tool names to the corresponding functions. Defaults to None.
         verbose (bool, optional): Whether to print results. Defaults to True.
         max_iteration (int, optional): Maximum iterations to chat with the agent. Defaults to 10.
+        chat_history (list, optional): The chat history in case you had a conversation with this agent before and want to continue it. Defaults to [].
+        return_chat_history (bool, optional): Whether to return the chat history. Defaults to False.
 
     Returns:
         str: the response of the agent. If response_format is provided, it will be in the correct format and can be converted to a json object.
@@ -97,12 +99,12 @@ def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to
 
     iteration = 0
 
-    chat_history = [
+    chat_history.extend([
         {
             "role": "user",
             "content": message
         }
-    ]
+    ])
 
     # Main loop to process the request
     while iteration < max_iteration:
@@ -139,11 +141,16 @@ def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to
                         },
                     }
                 )
+                chat_history.append(res.choices[0].message)
                 if verbose:
                     print("The final response is being put into the correct format")
             if verbose:
                 print('Agent response:', res.choices[0].message)
-            return res.choices[0].message.content
+
+            if return_chat_history:
+                return res.choices[0].message.content, chat_history
+            else:
+                return res.choices[0].message.content
 
 
         for tool_call in tool_calls:
