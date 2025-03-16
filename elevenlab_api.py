@@ -62,3 +62,41 @@ def upload_context(path,key,agent_id = "7ZNPyYITxhYm97d1kY0q"):
     update_agent(key,agent_id=agent_id)
     context_id = upload_context_file(key,path)
     link_knowledge_base_to_agent(client,document_id=context_id,agent_id=agent_id)
+
+
+
+from elevenlabs.client import ElevenLabs
+from elevenlabs.conversational_ai.conversation import Conversation
+from elevenlabs.conversational_ai.default_audio_interface import DefaultAudioInterface
+key = "sk_1f973a4171012be7f5f13d7b0bd76d359f11d42d13b4c49e"
+def call(key,agent_id= "7ZNPyYITxhYm97d1kY0q"):
+  
+
+  client = ElevenLabs(api_key=key)
+
+  dynamic_vars = {
+    "Suppliers_Name": "Angelo",
+  }
+
+
+
+  conversation = Conversation(
+    client,
+    agent_id,
+    # Assume auth is required when API_KEY is set.
+    requires_auth=bool(key),
+    # Use the default audio interface.
+    audio_interface=DefaultAudioInterface(),
+    # Simple callbacks that print the conversation to the console.
+    callback_agent_response=lambda response: print(f"Agent: {response}"),
+    callback_agent_response_correction=lambda original, corrected: print(f"Agent: {original} -> {corrected}"),
+    callback_user_transcript=lambda transcript: print(f"User: {transcript}"),
+    # Uncomment the below if you want to see latency measurements.
+    # callback_latency_measurement=lambda latency: print(f"Latency: {latency}ms"),
+  )
+
+  conversation.start_session()
+
+  #signal.signal(signal.SIGINT, lambda sig, frame: conversation.end_session())
+
+
