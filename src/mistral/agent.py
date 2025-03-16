@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from eval_data import get_price_to_cost_change
+from src.mistral.tools.eval_data import get_price_to_cost_change
 from mistralai import Mistral
 
 api_key = os.getenv("MISTRAL_API_KEY")

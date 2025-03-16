@@ -6,12 +6,27 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 from src.mistral.agent import agent_call
 
+# exposed function: strategy_formalizer()
+# This function is used to create a strategy formalization based on the offer and leverage data.
+# It assumes the file runtimedata/offers_and_leverages.csv exists and has the following columns: supplier, offer, leverage
+# The function will create a strategy formalization based on the data read in and store it in runtimedata/strategy_formalizer_output.json with the following schema:
+# {
+#     "strategy": {
+#         "title": "A descriptive title of the strategy representing the broader idea of the steps",
+#         "steps": [
+#             {
+#                 "action": "The step of the strategy.",
+#                 "leverage": "The leverage of the step."
+#             }
+#         ]
+#     }
+
 
 strategy_formalizer_agent_id = "ag:f9b7aa04:20250315:strategy-formalizer:8eb009de"
 
 def read_offer_and_leverage_data():
     # mock this for now :D
-    df = pd.read_csv('dataset/offers_leverages_mock.csv')
+    df = pd.read_csv('runtimedata/offers_and_leverages.csv')
     return df
 
 tool_name_to_function = {
@@ -75,7 +90,7 @@ def strategy_formalizer():
     print(json.dumps(res_json, indent=4))
 
     #write to file
-    with open('strategy_formalizer_output.json', 'w') as f:
+    with open('runtimedata/strategy_formalizer_output.json', 'w') as f:
         json.dump(res_json, f, indent=4)
 
 

@@ -31,16 +31,16 @@ def get_trends():
     df_energy = pd.read_csv('dataset/energy.csv')
     df_labor = pd.read_csv('dataset/labor.csv')
     df_steel = pd.read_csv('dataset/steel.csv')
-    
+
     def calculate_trend(df, column='change_rate'):
         df = df.sort_values(by='year').tail(3)
         trend_steepness = df[column].diff().mean()
         return trend_steepness
-    
+
     trend_energy = calculate_trend(df_energy)
     trend_labor = calculate_trend(df_labor)
     trend_steel = calculate_trend(df_steel)
-    
+
     return f"energy trends: {trend_energy}, labor trends: {trend_labor}, steel trends: {trend_steel}"
 
 def get_historic_values():
