@@ -14,15 +14,31 @@ This project uses [Poetry](https://python-poetry.org/) to manage dependencies. F
    ```
 
 2. **Install Dependencies:**
+
+   Install portaudio
+   ```bash
+   brew install portaudio
+   ```
+
+   > If you're on linux or windows, pls research on how to install portaudio 🙏
+
    Run the following command to create a virtual environment and install all required packages:
    ```bash
    poetry install
    ```
 
+   Refer to the [poetry installation guide](https://python-poetry.org/docs/#installation) if you have poetry not yet installed.
+
 3. **Activate the Virtual Environment:**
    Start the shell within the virtual environment:
    ```bash
    poetry shell
+   ```
+
+   Make sure that you export all the environment variables from the `.env`-file.
+   ```
+   export MISTRAL_API_KEY=<your_api_key>
+   export ELEVEN_API_KEY=<your_api_key>
    ```
 
 4. **Run the Application:**
