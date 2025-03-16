@@ -22,7 +22,7 @@ from src.mistral.agent import agent_call
 #     }
 
 
-strategy_formalizer_agent_id = "ag:f9b7aa04:20250315:strategy-formalizer:8eb009de"
+strategy_formalizer_agent_id = os.environ.get('STRATEGY_FORMALIZER_AGENT_ID')
 
 def read_offer_and_leverage_data():
     df = pd.read_csv('runtimedata/offers_and_leverages.csv')

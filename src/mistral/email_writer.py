@@ -4,7 +4,11 @@ from time import sleep
 import pandas as pd
 import sys
 import os
+from mistralai import Mistral
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+api_key = os.getenv("MISTRAL_API_KEY")
+mistral = Mistral(api_key=api_key)
 
 from src.mistral.agent import agent_call
 
@@ -14,8 +18,8 @@ from src.mistral.agent import agent_call
 # delete_email_history: This function is called to delete the email chat history for a supplier.
 
 
-email_agent_id = "ag:f9b7aa04:20250315:untitled-agent:d38f7f78"
-supplier_email_agent_id = "ag:f9b7aa04:20250316:supplier-email-response-agent:77065d2f"
+email_agent_id = os.environ.get("CUSTOMER_EMAIL_AGENT_ID")
+supplier_email_agent_id = os.environ.get("SUPPLIER_EMAIL_AGENT_ID")
 
 def read_offer_and_leverage_data():
     df = pd.read_csv('runtimedata/offers_and_leverages.csv')
@@ -109,6 +113,26 @@ def supplier_email_agent(supplier_name, accept:bool):
 
     return email, offer
 
+def email_thread_to_summary(supplier_name):
+    # make sure the file exists
+    if not os.path.exists(f"email_messages/{supplier_name}_email_chat_history.pkl"):
+        return "No email chat history found for this supplier."
+
+    with open(f"email_messages/{supplier_name}_email_chat_history.pkl", 'rb') as f:
+        chat_history = pickle.load(f)
+        chat_history_str = str(chat_history)
+
+        system_prompt = 'You will get a string of the chat_history which is about an email conversation between a customer and a supplier who are negotiating over the price. The supplier wants to maximize the prize while the customer wants to minimize the prize. Please summarize the conversation in a few sentences and in the end emphasize at which price the negotiation is left.'
+
+        res = mistral.chat.complete(
+            model="mistral-large-latest",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": chat_history_str}
+            ],
+        )
+
+        return str(res.choices[0].message)
 
 def delete_email_history(supplier_name):
     if os.path.exists(f"email_messages/{supplier_name}_email_chat_history.pkl"):
@@ -128,6 +152,9 @@ if __name__ == '__main__':
     print('Email to TorqueTech 2:')
     print(email_TorqueTech_2)
 
+    print('Summary:')
+    print(email_thread_to_summary("TorqueTech"))
+
 
     # write pickled chat history to a txt file as string
     with open('email_messages/TorqueTech_email_chat_history.pkl', 'rb') as f:
@@ -136,4 +163,4 @@ if __name__ == '__main__':
     with open('email_messages/TorqueTech_email_chat_history.txt', 'w') as f:
         f.write(chat_history_str)
 
-    delete_email_history("TorqueTech")
+    # delete_email_history("TorqueTech")

@@ -1,6 +1,12 @@
+import os
 import requests
 
 from elevenlabs import ElevenLabs
+
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
+from src.mistral.email_writer import email_thread_to_summary
 agent_id = "7ZNPyYITxhYm97d1kY0q"
 
 
@@ -24,7 +30,7 @@ def update_agent(key,agent_id="7ZNPyYITxhYm97d1kY0q"):
     }
     response = requests.patch(url, json=payload, headers=headers)
     print("Knowledge base updated")
-    
+
 def upload_context_file(key,file_path):
     headers = {
         'xi-api-key': key,
@@ -34,12 +40,12 @@ def upload_context_file(key,file_path):
         'name': (None, ''),
     }
     response = requests.post('https://api.elevenlabs.io/v1/convai/knowledge-base', headers=headers, files=files)
-    
+
     print("Context file uploaded")
     return response.json()['id']
 
 def link_knowledge_base_to_agent(client,agent_id = "7ZNPyYITxhYm97d1kY0q",document_id = "jZCNew80TpRKjr6K6sPZ"):
-  #client = ElevenLabs(api_key=key)        
+  #client = ElevenLabs(api_key=key)
   client.conversational_ai.update_agent(
     agent_id=agent_id,
       conversation_config={"agent":{"prompt":{"knowledge_base": [
@@ -54,7 +60,7 @@ def remove_knowledge_base_from_agent(client,agent_id = "7ZNPyYITxhYm97d1kY0q"):
     client.conversational_ai.update_agent(
     agent_id=agent_id,
       conversation_config={"agent":{"prompt":{"knowledge_base": [
-            
+
           ],}}})
 def upload_context(path,key,agent_id = "7ZNPyYITxhYm97d1kY0q"):
     client = ElevenLabs(api_key=key)
@@ -64,13 +70,25 @@ def upload_context(path,key,agent_id = "7ZNPyYITxhYm97d1kY0q"):
     link_knowledge_base_to_agent(client,document_id=context_id,agent_id=agent_id)
 
 
+def give_context_and_call(context_string):
+  # save the string to a file
+  with open("runtimedata/call_context.txt", "w") as f:
+      f.write(context_string)
+
+  # upload the file to the server
+  upload_context("runtimedata/call_context.txt",key)
+
+  # call the agent
+  call(key)
+
+
 
 from elevenlabs.client import ElevenLabs
 from elevenlabs.conversational_ai.conversation import Conversation
 from elevenlabs.conversational_ai.default_audio_interface import DefaultAudioInterface
 key = "sk_1f973a4171012be7f5f13d7b0bd76d359f11d42d13b4c49e"
 def call(key,agent_id= "7ZNPyYITxhYm97d1kY0q"):
-  
+
 
   client = ElevenLabs(api_key=key)
 
@@ -100,3 +118,7 @@ def call(key,agent_id= "7ZNPyYITxhYm97d1kY0q"):
   #signal.signal(signal.SIGINT, lambda sig, frame: conversation.end_session())
 
 
+if __name__=="__main__":
+  key = os.environ.get("ELEVEN_API_KEY")
+  summary = email_thread_to_summary("TorqueTech")
+  give_context_and_call(summary)
