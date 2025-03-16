@@ -1,12 +1,13 @@
 import json
 import os
 import sys
-from time import sleep
+import time
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from src.mistral.tools.eval_data import get_price_to_cost_change
 from mistralai import Mistral
+from mistralai.models.sdkerror import SDKError
 
 api_key = os.getenv("MISTRAL_API_KEY")
 mistral = Mistral(api_key=api_key)
@@ -73,6 +74,31 @@ example_response_format = {
                     "required": ["answer"]
                 }
 
+def _rate_limit_safe_agent_completion_call(agent_id, messages, response_format=None, tools=None, max_retries=5, backoff_time=1.2):
+    try:
+        res = mistral.agents.complete(
+            messages=messages,
+            agent_id=agent_id,
+            stream=False,
+            tools=tools if tools else None,
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "response",
+                    "schema": response_format
+                },
+            } if response_format else None
+        )
+    except SDKError as e:
+        if e.status_code == 429:
+            print("Rate limit exceeded. Waiting for a while before retrying...")
+            time.sleep(backoff_time)
+            return _rate_limit_safe_agent_completion_call(agent_id, messages, response_format=response_format, tools=tools, max_retries=max_retries-1, backoff_time=backoff_time*1.2)
+        else:
+            raise e
+
+
+    return res
 
 def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to_function=None, verbose=True, max_iteration=20, chat_history=[], return_chat_history=False):
     """Call an agent with a message and process the response.
@@ -112,11 +138,9 @@ def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to
         if verbose:
             print(f"Iteration {iteration}")
             print("Chat history:", chat_history)
-        res = mistral.agents.complete(messages=chat_history,
-            agent_id=agent_id,
-            stream=False,
-            tools=tools if tools else None
-        )
+
+        res = _rate_limit_safe_agent_completion_call(agent_id, chat_history, tools=tools if tools else None)
+
         if verbose:
             print('Agent response:', res.choices[0].message)
 
@@ -130,18 +154,7 @@ def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to
             if response_format:
                 # we redo the last message with the correct response format, since before we didn't know whther the final response would be reached, i.e. no tools used
                 chat_history = chat_history[:-1]
-                res = mistral.agents.complete(messages=chat_history,
-                    agent_id=agent_id,
-                    stream=False,
-                    # response format is only allowed if no tools are provided
-                    response_format={
-                        "type": "json_schema",
-                        "json_schema": {
-                            "name": "response",
-                            "schema": response_format
-                        },
-                    }
-                )
+                res = _rate_limit_safe_agent_completion_call(agent_id, chat_history, response_format=response_format, tools=None)
                 chat_history.append(res.choices[0].message)
                 if verbose:
                     print("The final response is being put into the correct format")
@@ -166,8 +179,6 @@ def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to
                 print(f"Tool {function_name} was called with the parameters: {function_params} and the result was: {function_result}")
 
         iteration += 1
-        # prevent hitting the rate limit with one request per second :///
-        sleep(0.95)
 
 
 if __name__ == "__main__":
