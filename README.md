@@ -29,7 +29,12 @@ This project uses [Poetry](https://python-poetry.org/) to manage dependencies. F
 
    Refer to the [poetry installation guide](https://python-poetry.org/docs/#installation) if you have poetry not yet installed.
 
-3. **Activate the Virtual Environment:**
+3. **Create your Mistral Agents**
+
+   Refer to the folder `prompts` and for each file in there create an agent in Mistra.
+   Have a look at the [mistral website about agents](https://docs.mistral.ai/capabilities/agents/) if you need additional information on how to create agents.
+
+4. **Activate the Virtual Environment:**
    Start the shell within the virtual environment:
    ```bash
    poetry shell
@@ -39,16 +44,22 @@ This project uses [Poetry](https://python-poetry.org/) to manage dependencies. F
    ```
    export MISTRAL_API_KEY=<your_api_key>
    export ELEVEN_API_KEY=<your_api_key>
+
+   export LEVERAGE_ANALYZER_AGENT_ID=<agent_id>
+   export STRATEGY_FORMALIZER_AGENT_ID=<agent_id>
+   export CUSTOMER_EMAIL_AGENT_ID=<agent_id>
+   export SUPPLIER_EMAIL_AGENT_ID=<agent_id>
+
    ```
 
-4. **Run the Application:**
+5. **Run the Application:**
    With the environment activated, you can now run your application. For example:
    ```bash
    python main.py
    ```
    *(Replace `main.py` with the appropriate entry point for your project.)*
 
-5. **Adding New Dependencies:**
+6. **Adding New Dependencies:**
    To add additional packages, simply use:
    ```bash
    poetry add <package-name>

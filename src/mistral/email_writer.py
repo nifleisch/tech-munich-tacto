@@ -18,8 +18,8 @@ from src.mistral.agent import agent_call
 # delete_email_history: This function is called to delete the email chat history for a supplier.
 
 
-email_agent_id = "ag:f9b7aa04:20250315:untitled-agent:d38f7f78"
-supplier_email_agent_id = "ag:f9b7aa04:20250316:supplier-email-response-agent:77065d2f"
+email_agent_id = os.environ.get("CUSTOMER_EMAIL_AGENT_ID")
+supplier_email_agent_id = os.environ.get("SUPPLIER_EMAIL_AGENT_ID")
 
 def read_offer_and_leverage_data():
     df = pd.read_csv('runtimedata/offers_and_leverages.csv')

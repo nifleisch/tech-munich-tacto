@@ -208,7 +208,7 @@ def _agent_call(agent_id, companies_interest, volumes, tools=None, verbose=True,
 
 
 def leverage_analyzer():
-    agent_id = "ag:f9b7aa04:20250316:leverage-analyser:f59c5e87"
+    agent_id = os.environ.get("LEVERAGE_ANALYZER_AGENT_ID")
 
     info_file = pd.read_csv("runtimedata/offers_and_leverages.csv")
 
