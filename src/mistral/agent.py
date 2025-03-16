@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from time import sleep
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
@@ -165,6 +166,8 @@ def agent_call(agent_id, message, response_format=None, tools=None, tool_name_to
                 print(f"Tool {function_name} was called with the parameters: {function_params} and the result was: {function_result}")
 
         iteration += 1
+        # prevent hitting the rate limit with one request per second :///
+        sleep(0.95)
 
 
 if __name__ == "__main__":
